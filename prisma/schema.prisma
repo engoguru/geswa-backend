@@ -1,0 +1,362 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+
+// user-schema
+enum UserRole {
+  ADMIN
+  EMPLOYEE
+  MEMBER
+}
+model User {
+  id        Int      @id @default(autoincrement())
+
+  name      String
+  email     String   @unique
+  contact   String   @unique
+  password  String
+
+  role      UserRole @default(MEMBER)
+
+  employee  Employee?
+
+  isVerified Boolean  @default(false)
+  lastLogin  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  otps      Otptable[]
+}
+
+model Otptable {
+  id          Int       @id @default(autoincrement())
+
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  code        String
+  type        OTPType
+
+  expiresAt   DateTime
+  verified    Boolean   @default(false)
+
+  createdAt   DateTime  @default(now())
+}
+
+enum OTPType {
+  EMAIL_VERIFICATION
+  LOGIN
+  FORGOT_PASSWORD
+  PHONE_VERIFICATION
+}
+
+
+model Employee { 
+  id                Int      @id @default(autoincrement())
+
+  userId            Int      @unique
+
+  dob               DateTime?
+  highestEducation  String?
+
+  address           String?
+  state             String?
+  district          String?
+  pincode           String?
+
+  bankName          String?
+  accountNumber     String?
+  ifscCode          String?
+  branchName        String?
+
+  profileUrl        String?
+  profilePublicId   String?
+
+  aadharUrl         String?
+  aadharPublicId    String?
+
+  panUrl            String?
+  panPublicId       String?
+
+  user              User @relation(fields: [userId], references: [id])
+
+ employeeAssignments EmployeeAssignment[]
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Department {
+  id        Int      @id @default(autoincrement())
+
+  name      String   @unique
+  code      String?  @unique
+
+  roles     Role[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  employeeAssignments EmployeeAssignment[]
+}
+
+model Role {
+  id            Int      @id @default(autoincrement())
+
+  name          String
+
+  departmentId  Int
+
+  department    Department @relation(fields: [departmentId], references: [id])
+
+ 
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([departmentId, name])
+
+  employeeAssignments EmployeeAssignment[]
+}
+
+model State {
+  id   Int @id @default(autoincrement())
+  name String @unique
+
+  districts District[]
+  employeeAssignments EmployeeAssignment[]
+}
+
+model District {
+  id      Int @id @default(autoincrement())
+
+  name    String
+
+  stateId Int
+
+  state State @relation(fields: [stateId], references: [id])
+
+  talukas Taluka[]
+
+
+  employeeAssignments EmployeeAssignment[]
+}
+
+model Taluka {
+  id         Int @id @default(autoincrement())
+
+  name       String
+
+  districtId Int
+
+  district District @relation(fields: [districtId], references: [id])
+
+  villages Village[]
+
+  employeeAssignments EmployeeAssignment[]
+}
+
+model Village {
+  id       Int @id @default(autoincrement())
+
+  name     String
+
+  talukaId Int
+
+  taluka Taluka @relation(fields: [talukaId], references: [id])
+
+  employeeAssignments EmployeeAssignment[]
+}
+
+model EmployeeAssignment {
+  id Int @id @default(autoincrement())
+
+  employeeId   Int
+  departmentId Int
+  roleId       Int
+
+  stateId      Int?
+  districtId   Int?
+  talukaId     Int?
+  villageId    Int?
+
+  isActive   Boolean @default(true)
+
+  employee   Employee   @relation(fields: [employeeId], references: [id])
+  department Department @relation(fields: [departmentId], references: [id])
+  role       Role       @relation(fields: [roleId], references: [id])
+
+  state    State?    @relation(fields: [stateId], references: [id])
+  district District? @relation(fields: [districtId], references: [id])
+  taluka   Taluka?   @relation(fields: [talukaId], references: [id])
+  village  Village?  @relation(fields: [villageId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+
+
+
+
+
+
+
+
+// contact schema 
+model Contact {
+  id        Int      @id @default(autoincrement())
+
+  name      String
+  contact   String
+  email     String
+
+  subject   String?
+  message   String?
+  status    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+
+// Hospital model
+model Hospital {
+  id            Int       @id @default(autoincrement())
+
+  name          String
+  tagline       String?
+  rating        Float?
+  reviews       Int?
+
+  address       String
+  city          String
+  state         String
+  zip           String
+  about         String?
+
+  services      String[]  // Service names
+
+  availability  String?
+  contact       String
+  email         String?
+
+  // NEW IMAGE FIELDS
+  imageUrl        String?
+  imagePublicKey  String?
+
+  doctors       Doctor[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Doctor {
+  id            Int       @id @default(autoincrement())
+
+  name          String
+  specialty     String
+  experience    Int?
+
+  // NEW IMAGE FIELDS
+  imageUrl        String?
+  imagePublicKey  String?
+
+  hospitalId    Int      
+  hospital      Hospital  @relation(fields: [hospitalId], references: [id])
+
+  createdAt     DateTime  @default(now())
+}
+
+//  blog
+model Blog {
+  id          Int    @id @default(autoincrement())
+
+
+
+  title       String
+  
+  excerpt     String?
+
+  content     String   // Jodit HTML content
+
+  imageUrl       String?
+  imagePublicKey String?
+
+ 
+
+  metaTitle       String?
+  metaDescription String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+}
+
+
+
+
+
+//  career page
+model Job {
+  id               Int     @id @default(autoincrement())
+
+  title            String
+  description      String   @db.Text
+
+  responsibilities String[]
+  requirements     String[]
+  benefits         String[]
+
+  location         String
+  salaryRange      String?
+
+  employmentType   String
+  experience       String
+
+  isActive         Boolean  @default(true)
+
+  applications     Application[]
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Application {
+  id               Int    @id @default(autoincrement())
+
+  fullName         String
+  email            String
+  phone            String
+
+  experience       String?
+  coverLetter      String? @db.Text
+
+  resume_publicId  String
+  resume_Url       String
+
+  status           ApplicationStatus @default(PENDING)
+
+  jobId            Int 
+  job              Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+enum ApplicationStatus {
+  PENDING
+  REVIEWING
+  SHORTLISTED
+  REJECTED
+  HIRED
+}
+
+
