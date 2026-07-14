@@ -59,6 +59,8 @@ jobs:
             -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
             -e PORT=${{ secrets.PORT }} \
             -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
+            -e DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}" \
+            -e DOCKER_PASSWORD="${{ secrets.DOCKER_PASSWORD }}" \
             ${{ secrets.DOCKER_USERNAME }}/geswa-backend:${{ github.sha }}
 
       - name: Remove Unused Docker Images
