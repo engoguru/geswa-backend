@@ -22,10 +22,13 @@ import assignedRoutes from "./routes/employee/assigned.routes.js";
 
 app.use(express.json())
 
-const  allowedOrigins=[
-    "http://localhost:5173",
-    "http://localhost:5174",
-]
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "https://geswango.in",
+  "https://www.geswango.in",
+  "https://admin.geswango.in"
+];
 app.use(cors({
  origin:function(origin ,  callback){
     if(!origin){
