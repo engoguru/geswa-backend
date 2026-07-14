@@ -42,15 +42,17 @@ FROM node:20-alpine AS build
 
 WORKDIR /app
 
+ARG DATABASE_URL
+ENV DATABASE_URL=$DATABASE_URL
+
 COPY package*.json ./
 
-# Install all dependencies (including prisma CLI)
 RUN npm install
 
 COPY . .
 
-# Generate Prisma Client
 RUN npx prisma generate
+
 
 # --------------------------
 # Stage 2: Production
