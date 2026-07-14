@@ -1,3 +1,76 @@
+# name: geswa-backend
+
+# on:
+#   push:
+#     branches:
+#       - master
+
+# jobs:
+#   build:
+#     name: Build and Push Docker Image
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Checkout Source
+#         uses: actions/checkout@v4
+
+#       - name: Login to Docker Hub
+#         run: |
+#           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login \
+#           -u "${{ secrets.DOCKER_USERNAME }}" \
+#           --password-stdin
+
+#       - name: Build Docker Image
+#         run: |
+#           docker build -t ${{ secrets.DOCKER_USERNAME }}/geswa-backend:${{ github.sha }} .
+
+#       - name: Push Docker Image
+#         run: |
+#           docker push ${{ secrets.DOCKER_USERNAME }}/geswa-backend:${{ github.sha }}
+
+#   deploy:
+#     name: Deploy to EC2
+#     needs: build
+#     runs-on: self-hosted
+
+#     steps:
+#       - name: Pull Latest Docker Image
+#         run: |
+#           docker pull ${{ secrets.DOCKER_USERNAME }}/geswa-backend:${{ github.sha }}
+
+#       - name: Remove Old Container
+#         run: |
+#           docker rm -f geswa-backend-service || true
+
+#       - name: Run New Docker Container
+#         run: |
+#           docker run -d \
+#             --name geswa-backend-service \
+#             --restart unless-stopped \
+#             -p ${{ secrets.PORT }}:${{ secrets.PORT }} \
+#             -e AWS_REGION=${{ secrets.AWS_REGION }} \
+#             -e AWS_BUCKET_NAME=${{ secrets.AWS_BUCKET_NAME }} \
+#             -e AWS_BUCKET_ACCESS_KEY=${{ secrets.AWS_BUCKET_ACCESS_KEY }} \
+#             -e AWS_BUCKET_SECRET_ACCESS_KEY=${{ secrets.AWS_BUCKET_SECRET_ACCESS_KEY }} \
+#             -e GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }} \
+#             -e PINECONE_API_KEY=${{ secrets.PINECONE_API_KEY }} \
+#             -e EMAIL_USER=${{ secrets.EMAIL_USER }} \
+#             -e EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }} \
+#             -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
+#             -e PORT=${{ secrets.PORT }} \
+#             -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
+#             -e DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}" \
+#             -e DOCKER_PASSWORD="${{ secrets.DOCKER_PASSWORD }}" \
+#             ${{ secrets.DOCKER_USERNAME }}/geswa-backend:${{ github.sha }}
+
+#       - name: Remove Unused Docker Images
+#         run: docker image prune -af
+
+
+
+
+
+
 name: geswa-backend
 
 on:
@@ -17,12 +90,14 @@ jobs:
       - name: Login to Docker Hub
         run: |
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login \
-          -u "${{ secrets.DOCKER_USERNAME }}" \
-          --password-stdin
+            -u "${{ secrets.DOCKER_USERNAME }}" \
+            --password-stdin
 
       - name: Build Docker Image
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/geswa-backend:${{ github.sha }} .
+          docker build \
+            -t ${{ secrets.DOCKER_USERNAME }}/geswa-backend:${{ github.sha }} \
+            .
 
       - name: Push Docker Image
         run: |
@@ -34,13 +109,20 @@ jobs:
     runs-on: self-hosted
 
     steps:
+      - name: Login to Docker Hub
+        run: |
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login \
+            -u "${{ secrets.DOCKER_USERNAME }}" \
+            --password-stdin
+
       - name: Pull Latest Docker Image
         run: |
           docker pull ${{ secrets.DOCKER_USERNAME }}/geswa-backend:${{ github.sha }}
 
-      - name: Remove Old Container
+      - name: Stop and Remove Old Container
         run: |
-          docker rm -f geswa-backend-service || true
+          docker stop geswa-backend-service || true
+          docker rm geswa-backend-service || true
 
       - name: Run New Docker Container
         run: |
@@ -48,20 +130,19 @@ jobs:
             --name geswa-backend-service \
             --restart unless-stopped \
             -p ${{ secrets.PORT }}:${{ secrets.PORT }} \
-            -e AWS_REGION=${{ secrets.AWS_REGION }} \
-            -e AWS_BUCKET_NAME=${{ secrets.AWS_BUCKET_NAME }} \
-            -e AWS_BUCKET_ACCESS_KEY=${{ secrets.AWS_BUCKET_ACCESS_KEY }} \
-            -e AWS_BUCKET_SECRET_ACCESS_KEY=${{ secrets.AWS_BUCKET_SECRET_ACCESS_KEY }} \
-            -e GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }} \
-            -e PINECONE_API_KEY=${{ secrets.PINECONE_API_KEY }} \
-            -e EMAIL_USER=${{ secrets.EMAIL_USER }} \
-            -e EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }} \
-            -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
-            -e PORT=${{ secrets.PORT }} \
+            -e AWS_REGION="${{ secrets.AWS_REGION }}" \
+            -e AWS_BUCKET_NAME="${{ secrets.AWS_BUCKET_NAME }}" \
+            -e AWS_BUCKET_ACCESS_KEY="${{ secrets.AWS_BUCKET_ACCESS_KEY }}" \
+            -e AWS_BUCKET_SECRET_ACCESS_KEY="${{ secrets.AWS_BUCKET_SECRET_ACCESS_KEY }}" \
+            -e GOOGLE_API_KEY="${{ secrets.GOOGLE_API_KEY }}" \
+            -e PINECONE_API_KEY="${{ secrets.PINECONE_API_KEY }}" \
+            -e EMAIL_USER="${{ secrets.EMAIL_USER }}" \
+            -e EMAIL_PASSWORD="${{ secrets.EMAIL_PASSWORD }}" \
+            -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+            -e PORT="${{ secrets.PORT }}" \
             -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
-            -e DOCKER_USERNAME="${{ secrets.DOCKER_USERNAME }}" \
-            -e DOCKER_PASSWORD="${{ secrets.DOCKER_PASSWORD }}" \
             ${{ secrets.DOCKER_USERNAME }}/geswa-backend:${{ github.sha }}
 
       - name: Remove Unused Docker Images
-        run: docker image prune -af
+        run: |
+          docker image prune -af
