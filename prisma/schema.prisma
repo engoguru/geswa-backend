@@ -12,6 +12,7 @@ generator client {
 enum UserRole {
   ADMIN
   EMPLOYEE
+  HOSPITAL
   MEMBER
 }
 model User {
@@ -33,6 +34,10 @@ model User {
   updatedAt DateTime @updatedAt
 
   otps      Otptable[]
+
+  membershipPurchases MembershipPurchase[]
+
+  hospitalUser HospitalUser?
 }
 
 model Otptable {
@@ -198,6 +203,8 @@ model EmployeeAssignment {
   taluka   Taluka?   @relation(fields: [talukaId], references: [id])
   village  Village?  @relation(fields: [villageId], references: [id])
 
+  membershipPurchases MembershipPurchase[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -253,6 +260,8 @@ model Hospital {
   imagePublicKey  String?
 
   doctors       Doctor[]
+  hospitalUsers HospitalUser?
+  serviceHistory MembershipServiceHistory[]
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -274,6 +283,20 @@ model Doctor {
 
   createdAt     DateTime  @default(now())
 }
+
+model HospitalUser {
+  id Int @id @default(autoincrement())
+
+  userId Int @unique
+  user User @relation(fields: [userId], references: [id])
+
+  hospitalId Int @unique
+  hospital Hospital @relation(fields: [hospitalId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+
 
 //  blog
 model Blog {
@@ -360,3 +383,99 @@ enum ApplicationStatus {
 }
 
 
+//   membership handle -----------------------------------------------------
+
+enum DurationUnit {
+  MONTH
+  YEAR
+  LIFETIME
+}
+
+model Membership {
+  id            Int      @id @default(autoincrement())
+
+  name          String
+  description   String?  @db.Text
+  price         Decimal  @db.Decimal(10, 2)
+
+  durationValue Int?
+  durationUnit  DurationUnit
+
+  benefits      String[]
+
+  isActive      Boolean  @default(true)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  purchases     MembershipPurchase[]
+}
+model MembershipPurchase {
+  id Int @id @default(autoincrement())
+
+  userId Int
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  employeeAssignmentId Int
+  employeeAssignment EmployeeAssignment @relation(fields: [employeeAssignmentId], references: [id], onDelete: Cascade)
+
+  membershipId Int
+  membership Membership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+
+  serviceHistory MembershipServiceHistory[]
+
+  memberId String @unique
+
+  amountPaid Decimal @db.Decimal(10, 2)
+
+  paymentStatus PaymentStatus @default(PENDING)
+  status MembershipStatus @default(ACTIVE)
+
+  startDate DateTime
+  endDate DateTime?
+
+  transactionId String?
+  paymentMethod String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum MembershipStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+
+model MembershipServiceHistory {
+  id Int @id @default(autoincrement())
+
+ membershipPurchaseId Int
+membershipPurchase MembershipPurchase @relation(fields: [membershipPurchaseId], references: [id], onDelete: Cascade)
+
+hospitalId Int
+hospital Hospital @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+
+  serviceName String
+  serviceDetails String? @db.Text
+
+  actualBillAmount Decimal @db.Decimal(10,2)
+  offerAmount Decimal @default(0) @db.Decimal(10,2)
+  finalAmount Decimal @db.Decimal(10,2)
+
+  bill_publicId String?
+  bill_Url String?
+
+  usedAt DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

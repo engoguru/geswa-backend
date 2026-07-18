@@ -1,6 +1,6 @@
 import express from "express"
 import { auth } from "../auth/authentication.js";
-import { createDoctors, createHospital, updateHospital, viewAllHospital, viewOneHospital } from "../controllers/hospital.controller.js";
+import { assignUserToHospital, createDoctors, createHospital, getAssignedHospitalUser, removeAssignedHospitalUser, updateHospital, viewAllHospital, viewOneHospital } from "../controllers/hospital.controller.js";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import multer from "multer";
 
@@ -102,10 +102,24 @@ hospitalRoute.get("/viewAll", viewAllHospital)
 hospitalRoute.get("/viewOne/:id", viewOneHospital)
 
 hospitalRoute.put("/update/:id", auth, upload.single("file"),
- updateHospitalImages, updateHospital)
+  updateHospitalImages, updateHospital)
 
 //  same middleware use also here
 hospitalRoute.post("/add", auth, upload.single("file"),
   uploadHospitalImages, createDoctors)
+
+
+
+
+
+//+++++++++++++++++++++++++++++  Assigned
+hospitalRoute.post("/assign-hospital", auth, assignUserToHospital);
+
+
+hospitalRoute.get("/assigned-hospital/:userId", auth, getAssignedHospitalUser);
+
+
+hospitalRoute.delete("/remove-hospital/:userId", auth, removeAssignedHospitalUser);
+
 
 export default hospitalRoute

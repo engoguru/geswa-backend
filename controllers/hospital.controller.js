@@ -406,3 +406,163 @@ export const createDoctors = async (req, res) => {
 };
 
 
+
+// Assign  user to  hospital who manage 
+
+
+
+// Assign user to hospital
+export const assignUserToHospital = async (req, res) => {
+    try {
+        const { userId, hospitalId } = req.body;
+
+        if (!userId || !hospitalId) {
+            return res.status(400).json({
+                message: "User and hospital are required"
+            });
+        }
+
+        // check user already assigned
+        const existingUser = await prisma.hospitalUser.findUnique({
+            where: {
+                userId: Number(userId)
+            }
+        });
+
+        if (existingUser) {
+            return res.status(400).json({
+                message: "User already assigned to a hospital"
+            });
+        }
+
+
+        // check hospital already assigned
+        const existingHospital = await prisma.hospitalUser.findUnique({
+            where: {
+                hospitalId: Number(hospitalId)
+            }
+        });
+
+        if (existingHospital) {
+            return res.status(400).json({
+                message: "Hospital already assigned to another user"
+            });
+        }
+
+
+        const assigned = await prisma.hospitalUser.create({
+            data: {
+                userId: Number(userId),
+                hospitalId: Number(hospitalId)
+            },
+            include: {
+                user: true,
+                hospital: true
+            }
+        });
+
+
+        return res.status(201).json({
+            message: "Hospital assigned successfully",
+            data: assigned
+        });
+
+    } catch (error) {
+        console.log(error);
+
+        return res.status(500).json({
+            message: "Something went wrong",
+            error: error.message
+        });
+    }
+};
+
+
+
+// Get assigned hospital of user
+export const getAssignedHospitalUser = async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+
+        const assigned = await prisma.hospitalUser.findUnique({
+            where: {
+                userId: Number(userId)
+            },
+            include: {
+                hospital: true,
+                user: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        role: true
+                    }
+                }
+            }
+        });
+
+
+        if (!assigned) {
+            return res.status(404).json({
+                message: "No hospital assigned"
+            });
+        }
+
+
+        return res.status(200).json({
+            data: assigned
+        });
+
+    } catch (error) {
+        console.log(error);
+
+        return res.status(500).json({
+            message: "Something went wrong",
+            error: error.message
+        });
+    }
+};
+
+
+
+// Remove assigned hospital user
+export const removeAssignedHospitalUser = async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+
+        const assigned = await prisma.hospitalUser.findUnique({
+            where: {
+                userId: Number(userId)
+            }
+        });
+
+
+        if (!assigned) {
+            return res.status(404).json({
+                message: "Assignment not found"
+            });
+        }
+
+
+        await prisma.hospitalUser.delete({
+            where: {
+                userId: Number(userId)
+            }
+        });
+
+
+        return res.status(200).json({
+            message: "Hospital assignment removed successfully"
+        });
+
+    } catch (error) {
+        console.log(error);
+
+        return res.status(500).json({
+            message: "Something went wrong",
+            error: error.message
+        });
+    }
+};

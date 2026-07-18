@@ -18,10 +18,13 @@ import districtRoute from "./routes/coordinator/district.routes.js";
 import talukaRoutes from "./routes/coordinator/taluka.routes.js";
 import villageRoutes from "./routes/coordinator/village.routes.js";
 import assignedRoutes from "./routes/employee/assigned.routes.js";
+import planRoute from "./routes/memberShip/plan.routes.js";
+import purchaseRoute from "./routes/memberShip/purchase.routes.js";
+import serviceHistoryroute from "./routes/memberShip/serviceHistory.routes.js";
 
 
 app.use(express.json())
-
+ 
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:5174",
@@ -45,7 +48,7 @@ app.use(cors({
 app.use(cookieParser())
 app.use("/api/user",userRoute)
 app.use("/api/contact",contactRoute)
-
+ 
 
 app.use("/api/hospital",hospitalRoute)
 
@@ -66,6 +69,11 @@ app.use("/api/employee",employeeRoutes)
 
 // assigned
 app.use("/api/assigned",assignedRoutes)
+
+// member 
+app.use("/api/plan",planRoute)
+app.use("/api/membership-purchase",purchaseRoute)
+app.use("/api/membership-service",serviceHistoryroute)
 
 
 app.get("/checkUp",(req,res)=>{

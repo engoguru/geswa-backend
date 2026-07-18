@@ -88,7 +88,7 @@ export const userRegister = async (req, res) => {
       }),
       bcrypt.hash(password, 10),
     ]);
-
+// console.log(existingUser,"i0i")
     if (existingUser) {
       return res.status(400).json({
         success: false,
